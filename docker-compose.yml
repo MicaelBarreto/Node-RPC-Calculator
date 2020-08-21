@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+    server:
+        build:
+            context: .
+            dockerfile: .docker/server/Dockerfile
+        image: server
+        restart: unless-stopped
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./server:/usr/src/app
+        networks:
+            - rpc-network
+        environment: 
+            - PORT=3000
+            - TZ=America/Sao_Paulo
+
+    client:
+        build:
+            context: .
+            dockerfile: .docker/client/Dockerfile
+        image: client1
+        restart: unless-stopped
+        ports:
+            - "80:80"
+        volumes:
+            - ./client:/usr/src/app
+        networks:
+            - rpc-network
+        environment: 
+            - PORT=80
+            - TZ=America/Sao_Paulo
+
+networks:
+    rpc-network:
+        driver: bridge

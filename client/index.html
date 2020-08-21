@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href='https://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+    <title>Calculator</title>
+</head>
+<body>
+    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-6 offset-sm-3 offset-md-3 offset-lg-3 offset-xl-3 border border-secondary calculator">
+        <div class="row screen">
+            <div id="screen"></div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-6 border border-top border-secondary clickable ac" onclick="clearOperation()">AC</div>
+            <div class="col-sm-3 col-md-3 col-lg-3 col-xl-3 border border-top border-left border-secondary clickable" onclick="addOperator(`^`)">^</div>
+            <div class="col-sm-3 col-md-3 col-lg-3 col-xl-3 border border-top border-left border-secondary clickable" onclick="addOperator(`/`)">/</div>
+        </div>
+        <div class="row">
+            <div class="col-sm col-md col-lg col-xl border border-top border-secondary clickable number" onclick="addNumber(7)">7</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable number" onclick="addNumber(8)">8</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable number" onclick="addNumber(9)">9</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable" onclick="addOperator(`*`)">*</div>
+        </div>
+        <div class="row">
+            <div class="col-sm col-md col-lg col-xl border border-top border-secondary clickable number" onclick="addNumber(4)">4</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable number" onclick="addNumber(5)">5</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable number" onclick="addNumber(6)">6</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable" onclick="addOperator(`-`)">-</div>
+        </div>
+        <div class="row">
+            <div class="col-sm col-md col-lg col-xl border border-top border-secondary clickable number" onclick="addNumber(1)">1</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable number" onclick="addNumber(2)">2</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable number" onclick="addNumber(3)">3</div>
+            <div class="col-sm col-md col-lg col-xl border border-top border-left border-secondary clickable" onclick="addOperator(`+`)">+</div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-6 border border-top border-secondary clickable number" onclick="addNumber(0)">0</div>
+            <div class="col-sm-3 col-md-3 col-lg-3 col-xl-3 border border-top border-left border-secondary clickable number" onclick="addNumber(`.`)">.</div>
+            <div class="col-sm-3 col-md-3 col-lg-3 col-xl-3 border border-top border-left border-secondary clickable" onclick="handleSubmitOperation()">=</div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>    
+    <script src="/scripts/bundle.js"></script>
+    <script>
+        const client = new window.JSONRPCClient(
+            (jsonRPCRequest) =>
+                fetch("http://localhost:8000/json-rpc", {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify(jsonRPCRequest)
+                }).then(response => {
+                if (response.status === 200) {
+                    return response.json().then(jsonRPCResponse => client.receive(jsonRPCResponse));
+                } else if (jsonRPCRequest.id !== undefined) {
+                    return Promise.reject(new Error(response.statusText));
+                }
+                })
+        );
+    </script>
+    <script>
+        var number1 = '';
+        var number2 = '';
+        var operator = '';
+        var total = '';
+
+        const addNumber = number => {
+            total =  '';
+            if(operator) {
+                number2 += `${number}`;
+            } else {
+                number1 += `${number}`;
+            }
+
+            adjustScreen();
+        };
+
+        const addOperator = newOperator => {
+            if(number2) {
+                handleSubmitOperation();
+            } else {
+                if(!number1) {
+                    if(!total) {
+                        alert(`there is an error in this operation ${number1}${newOperator}${number2}`);
+                    } else {
+                        number1 = total;
+                    }
+                } else {
+                    operator = newOperator;
+                    adjustScreen();
+                }
+            }
+        };
+
+        const adjustScreen = () => {
+            if(operator) {
+                number2 ? $('#screen').html(number2) : $('#screen').html(number1);
+            } else {
+                if(total) {
+                    $('#screen').html(total)
+                } else {
+                    number1 ? $('#screen').html(number1) : $('#screen').html(0);
+                }
+            }
+        };
+
+        const clearOperation = () => {
+            number1 = '';
+            number2 = '';
+            operator = '';
+            total = '';
+            adjustScreen();
+        };
+
+        const handleSubmitOperation = () => {
+            if(!number1 && !operator) {
+                alert(`there is an error in this operation ${number1}${operator}${number2}`);
+            } else {
+                if(!number2) {
+                    number2 = number1;
+                }
+
+                var operation = operator === '^' ? `Math.pow(${number1}, ${number2})` : `${number1}${operator}${number2}`;
+                client.request("operation", { operation })
+                    .then(result => {
+                        total = result;
+                        number1 = '';
+                        operator = '';
+                        number2 = '';
+                        adjustScreen();
+                    });
+            }
+        };
+    </script>
+    <script>
+        $(document).on("keypress", ({ key }) => {
+            if(key === '0') addNumber(0);
+            if(key === '1') addNumber(1);
+            if(key === '2') addNumber(2);
+            if(key === '3') addNumber(3);
+            if(key === '4') addNumber(4);
+            if(key === '5') addNumber(5);
+            if(key === '6') addNumber(6);
+            if(key === '7') addNumber(7);
+            if(key === '8') addNumber(8);
+            if(key === '9') addNumber(9);
+            if(key === '.' || key === ',') addNumber('.');
+
+            if(key === '/') addOperator(key);
+            if(key === '*') addOperator(key);
+            if(key === '-') addOperator(key);
+            if(key === '+') addOperator(key);
+            if(key === '^') addOperator(key);
+
+            if(key === 'Enter') handleSubmitOperation();
+        });
+
+        $(document).ready(() => adjustScreen());
+    </script>
+    <style>
+        .clickable {
+            width: 10%;
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #d6d6d6;
+        }
+
+        .clickable:hover {
+            background-color: #C1C1C1;
+            cursor: pointer;
+        }
+
+        .clickable:active {
+            background-color: #a3a3a3;
+            cursor: pointer;
+        }
+
+        .calculator {
+            height: 100%;
+            position:absolute;
+            top:0;
+            bottom:0;
+            background-color: #C0C0C0;
+        }
+
+        .screen {
+            height: 20% !important;
+            font-size: 50px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            margin-right: 2%;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .row {
+            height: 16%;
+        }
+
+        .number {
+            background-color: white;
+        }
+
+        .ac {
+            background-color: #ebebeb;
+        }
+
+    </style>
+</body>
+</html>
